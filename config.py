@@ -7,7 +7,7 @@ class Config:
     """Application configuration"""
     
     # Project settings
-    PROJECT_NAME: str = "blackfriday-mlops"
+    PROJECT_NAME: str = "black-friday-mlops"
     VERSION: str = "1.0.0"
     
     # Data settings

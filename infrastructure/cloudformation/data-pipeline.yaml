@@ -1,0 +1,132 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Black Friday MLOps Data Pipeline Infrastructure'
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: 'black-friday-mlops'
+    Description: 'Name of the MLOps project'
+
+Resources:
+  DataIngestionBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-data-ingestion-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Purpose
+          Value: data-ingestion
+
+  ProcessedDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-processed-data-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Purpose
+          Value: processed-data
+
+  ModelArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectName}-models-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Purpose
+          Value: model-artifacts
+
+  DataProcessingRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${ProjectName}-data-processing-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt DataIngestionBucket.Arn
+                  - !Sub '${DataIngestionBucket}/*'
+                  - !GetAtt ProcessedDataBucket.Arn
+                  - !Sub '${ProcessedDataBucket}/*'
+                  - !GetAtt ModelArtifactsBucket.Arn
+                  - !Sub '${ModelArtifactsBucket}/*'
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+
+Outputs:
+  DataIngestionBucketName:
+    Description: 'Name of the data ingestion S3 bucket'
+    Value: !Ref DataIngestionBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-DataIngestionBucket'
+
+  ProcessedDataBucketName:
+    Description: 'Name of the processed data S3 bucket'
+    Value: !Ref ProcessedDataBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-ProcessedDataBucket'
+
+  ModelArtifactsBucketName:
+    Description: 'Name of the model artifacts S3 bucket'
+    Value: !Ref ModelArtifactsBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-ModelArtifactsBucket'
+
+  DataProcessingRoleArn:
+    Description: 'ARN of the data processing IAM role'
+    Value: !GetAtt DataProcessingRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-DataProcessingRoleArn'
