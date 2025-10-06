@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 
 from src.data_pipeline.validation import DataValidator, ValidationResult
-from src.data_pipeline.feature_engineering import FeatureEngineer
+from src.data_pipeline.feature_engineering import AdvancedFeatureEngineer
 from data.schemas.black_friday_schema import DataSchema
 
 class TestDataValidation(unittest.TestCase):
@@ -83,9 +83,9 @@ class TestFeatureEngineering(unittest.TestCase):
     """Test feature engineering functionality"""
     
     def setUp(self):
-        """Setup test fixtures"""
-        self.feature_engineer = FeatureEngineer()
-        # Create test data with consistent types for encoding
+        """Setup test fixtures for AdvancedFeatureEngineer"""
+        self.feature_engineer = AdvancedFeatureEngineer()
+        # Create test data with correct types and valid values
         self.test_data = pd.DataFrame({
             'User_ID': [1001, 1001, 1002, 1002, 1003],
             'Product_ID': ['P001', 'P002', 'P001', 'P003', 'P001'],
@@ -96,40 +96,36 @@ class TestFeatureEngineering(unittest.TestCase):
             'Stay_In_Current_City_Years': ['1', '1', '2', '2', '3'],
             'Marital_Status': [0, 0, 1, 1, 0],
             'Product_Category_1': [1, 2, 1, 3, 1],
-            'Product_Category_2': ['2', 'Unknown', '2', '4', '2'],
-            'Product_Category_3': ['Unknown', 'Unknown', 'Unknown', '5', 'Unknown'],
+            'Product_Category_2': [2.0, None, 2.0, 4.0, 2.0],
+            'Product_Category_3': [None, None, None, 5.0, None],
             'Purchase': [1000, 2000, 1500, 2500, 1200]
         })
     
     def test_demographic_features_created(self):
-        """Test creation of demographic features"""
-        result = self.feature_engineer.fit_transform(self.test_data)
-        
-        # Check if demographic features are created
-        self.assertIn('Age_Numeric', result.columns)
-        self.assertIn('Gender_Encoded', result.columns)
-        self.assertIn('City_Tier', result.columns)
-        self.assertIn('Demographic_Score', result.columns)
+        """Test creation of demographic features (AdvancedFeatureEngineer)"""
+        result, metrics = self.feature_engineer.fit_transform(self.test_data)
+        # Check for new demographic features
+        self.assertIn('Age_Ordinal', result.columns)
+        self.assertIn('Gender_Binary', result.columns)
+        self.assertIn('City_Economic_Tier', result.columns)
+        self.assertIn('Stay_Duration_Years', result.columns)
+        self.assertIn('Demographic_Power_Index', result.columns)
     
     def test_behavioral_features_created(self):
-        """Test creation of behavioral features"""
-        result = self.feature_engineer.fit_transform(self.test_data)
-        # Accept either User_Product_Count or User_Purchase_Count (alias)
-        self.assertTrue(
-            'User_Product_Count' in result.columns or 'User_Purchase_Count' in result.columns,
-            'Neither User_Product_Count nor User_Purchase_Count found in columns.'
-        )
-        # Accept either Customer_Engagement_Score or Customer_Value_Score (alias)
-        self.assertTrue(
-            'Customer_Engagement_Score' in result.columns or 'Customer_Value_Score' in result.columns,
-            'Neither Customer_Engagement_Score nor Customer_Value_Score found in columns.'
-        )
+        """Test creation of behavioral features (AdvancedFeatureEngineer)"""
+        result, metrics = self.feature_engineer.fit_transform(self.test_data)
+        # Check for new behavioral features
+        self.assertIn('User_Total_Items', result.columns)
+        self.assertIn('User_Unique_Products', result.columns)
+        self.assertIn('User_Category_Breadth', result.columns)
+        self.assertIn('User_Shopping_Intensity', result.columns)
+        self.assertIn('User_Category_Focus', result.columns)
+        self.assertIn('Engagement_Score', result.columns)
     
     def test_feature_consistency(self):
-        """Test that feature engineering is consistent across calls"""
-        result1 = self.feature_engineer.fit_transform(self.test_data)
+        """Test that feature engineering is consistent across calls (AdvancedFeatureEngineer)"""
+        result1, _ = self.feature_engineer.fit_transform(self.test_data)
         result2 = self.feature_engineer.transform(self.test_data)
-        
         # Check that results are identical
         pd.testing.assert_frame_equal(result1, result2)
 

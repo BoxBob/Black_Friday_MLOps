@@ -27,6 +27,27 @@ class MonitoringConfig:
     processing_time_alert_threshold: int = 1800
     sns_topic_arn: Optional[str] = None
 
+@dataclass
+class MLflowConfig:
+    tracking_uri: str = "http://localhost:5000"
+    experiment_name: str = "black-friday-prediction"
+    artifact_location: Optional[str] = None
+    registry_uri: Optional[str] = None
+    enable_autolog: bool = True
+    model_name: str = "black-friday-predictor"
+    stage: str = "staging"  # staging, production, archived
+
+@dataclass
+class WandbConfig:
+    project: str = "black-friday-mlops"
+    entity: Optional[str] = None
+    enable_logging: bool = True
+    log_artifacts: bool = True
+    log_code: bool = True
+    log_model: bool = True
+    tags: list = None
+    notes: Optional[str] = None
+
 def get_pipeline_config() -> Dict[str, Any]:
     """
     Get comprehensive configuration for data pipeline
